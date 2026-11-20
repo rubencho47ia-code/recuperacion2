@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Números Fraccionarios · Grado 5°</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<style>
+:root{--bg:#eef6ff;--card:#fff;--ink:#2b2d42;--a:#7b2cbf;--ok:#2a9d8f;--bad:#e63946;--y:#ffbe0b}
+@media (prefers-color-scheme:dark){:root{--bg:#1d2233;--card:#283048;--ink:#f1f3f9}}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Trebuchet MS","Comic Sans MS",sans-serif;background:var(--bg);color:var(--ink);font-size:18px;line-height:1.6}
+header{background:var(--a);color:#fff;padding:14px 16px;text-align:center}
+header h1{margin:0;font-size:1.5rem}
+header input[type=text]{margin-top:8px;width:min(420px,90%)}
+nav{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px;position:sticky;top:0;background:var(--bg);z-index:5}
+nav button{background:var(--card);color:var(--ink);border:2px solid var(--a);border-radius:20px;padding:8px 16px;font:inherit;font-size:.9rem;cursor:pointer}
+nav button.on{background:var(--y);color:#222;border-color:var(--y)}
+main{max-width:860px;margin:auto;padding:10px 14px 60px}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border-radius:14px;padding:12px 16px;margin:12px 0;box-shadow:0 2px 6px #0002}
+h2,h3{margin:.3em 0}
+input,select{font:inherit;padding:8px;border:2px solid #aab;border-radius:10px;width:100%;color:#222}
+button.b{background:var(--a);color:#fff;border:0;border-radius:12px;padding:8px 14px;font:inherit;cursor:pointer;margin:4px 4px 4px 0}
+button.g{background:var(--ok)}
+.opt{display:block;width:100%;text-align:left;margin:5px 0;padding:8px 12px;border:2px solid #aab;border-radius:10px;background:transparent;color:var(--ink);font:inherit;cursor:pointer}
+.opt.sel{border-color:var(--a);background:#7b2cbf33}.opt.ok{border-color:var(--ok);background:#2a9d8f44}.opt.bad{border-color:var(--bad);background:#e6394644}
+.tag{font-size:.7rem;background:var(--y);color:#222;border-radius:8px;padding:1px 7px}
+.tip{background:#ffbe0b33;border-left:5px solid var(--y);padding:6px 10px;margin:6px 0;border-radius:6px;font-size:.95rem}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 3px;line-height:1.15;font-size:.95em}
+.fr i{font-style:normal;padding:0 3px}.fr i:first-child{border-bottom:2px solid currentColor}
+.sv{margin:6px 0;overflow-x:auto}svg{max-width:100%;height:auto}
+.ti{width:min(260px,100%);margin-top:6px}
+.okI{border-color:var(--ok);background:#2a9d8f33}.badI{border-color:var(--bad);background:#e6394633}
+.big{font-size:3rem;text-align:center;margin:0}
+.hb{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px}
+.hb select{width:auto;max-width:90%;padding:5px}
+.hb button{background:#fff;color:#222;border:0;border-radius:14px;padding:5px 10px;font:inherit;font-size:.8rem;cursor:pointer}
+@media print{nav,header input,.hb,.no{display:none}}
+</style>
+</head>
+<body>
+<header><h1>➗ Números Fraccionarios · Grado 5°</h1>
+<input type="text" id="nm" placeholder="✏️ Escribe tu nombre aquí" oninput="S.name=this.value;save()">
+<div class="hb"><select id="pf" onchange="pickProf(this.value)"></select>
+<button onclick="nuevo()">➕ Nuevo estudiante</button><button onclick="fileSave()">💾 Guardar en archivo</button><button onclick="$('fl').click()">📂 Cargar archivo</button>
+<input type="file" id="fl" accept=".json" hidden onchange="fileLoad(this)"></div>
+<div style="font-size:.8rem;margin-top:4px">Tu avance se guarda solo en este equipo. Para seguir en otro computador, usa 💾 y luego 📂.</div></header>
+<nav id="nav"></nav>
+<main>
+<section id="s0"><h2>📘 Teoría</h2><div id="th"></div><button class="b" onclick="go(1)">🎮 Ir a los ejercicios ➡️</button></section>
+<section id="s1"><h2>🎮 Ejercicios (50)</h2><p>Toca la respuesta: verás al instante si acertaste.</p><div id="exl"></div></section>
+<section id="s2"><h2>🛠️ Taller (50 actividades)</h2><p>Escribe tu respuesta en cada casilla y al final pulsa «Revisar». Usa <b>3/4</b> para fracciones y <b>2 1/3</b> para números mixtos (un espacio entre el entero y la fracción). Simplifica cuando te lo pidan.</p><div id="tal"></div><button class="b g no" onclick="revisar()">✅ Revisar mi taller</button></section>
+<section id="s3"><h2>📝 Evaluación (50 preguntas de selección múltiple)</h2><p>Escoge una sola respuesta en cada pregunta.</p><div id="evl"></div><button class="b g no" onclick="calif()">✅ Calificar evaluación</button><div id="rs"></div></section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+/* ✏️ DOCENTE: correo y URL del Apps Script para el envío automático del informe */
+const CORREO_PROFE="rubencho47ia@gmail.com";
+const URL_ENVIO="https://script.google.com/macros/s/AKfycby3x1V_C5Y4OMua2p9jRpUpct2u3YoSV4zShrrMl9f7nbXyDySjbYFcewcURXLtaUYr/exec";
+const TOP=["La fracción y sus términos","Fracciones propias e impropias","Números mixtos","Fracciones equivalentes","Comparación de fracciones","Suma y resta de fracciones","Multiplicación y división de fracciones"];
+const TIP=["Repasa que el numerador son las partes que se toman y el denominador las partes iguales en que se divide el entero, y cómo se leen (medios, tercios, cuartos...).","Recuerda: propia si el numerador es menor que el denominador; impropia si es mayor; si son iguales vale 1 entero.","Practica pasar de mixto a impropia (entero × denominador + numerador) y de impropia a mixto (dividiendo).","Recuerda que para hallar equivalentes multiplicas o divides arriba y abajo por el mismo número, y que simplificas con el máximo divisor común.","Mismo denominador: gana el mayor numerador. Mismo numerador: gana el menor denominador. Si ambos cambian, usa productos cruzados.","Con igual denominador suma o resta solo los numeradores. Si son distintos, busca fracciones equivalentes con denominador común y simplifica al final.","Multiplica numeradores entre sí y denominadores entre sí; para dividir, multiplica por la fracción invertida. Simplifica el resultado."];
+const FM={f:"Escribe una fracción, ej. 3/4",m:"Escribe un número mixto, ej. 2 1/3",n:"Escribe un número",s:"Escribe <, > o ="};
+/* utilidades */
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+const fs=(n,d)=>{const g=gcd(n,d);n/=g;d/=g;return d==1?""+n:n+"/"+d};
+function R(s){return()=>{s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const ri=(r,a,b)=>a+Math.floor(r()*(b-a+1)),pk=(r,a)=>a[Math.floor(r()*a.length)];
+const sh=(r,a)=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const E=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const H=s=>String(s).replace(/(\d+) (\d+)\/(\d+)/g,'$1<span class="fr"><i>$2</i><i>$3</i></span>').replace(/(\d+)\/(\d+)/g,'<span class="fr"><i>$1</i><i>$2</i></span>');
+const norm=s=>String(s==null?"":s).trim().replace(/\s+/g," ").replace(/\s*\/\s*/g,"/");
+function V(n,d){const w=Math.ceil(n/d),cw=Math.min(24,Math.floor(300/(w*d+w))),W=w*(d*cw+8);let s=`<svg viewBox="0 0 ${W} ${cw+4}" width="${Math.min(W,320)}" style="vertical-align:middle">`;
+for(let i=0;i<w*d;i++){const x=Math.floor(i/d)*(d*cw+8)+(i%d)*cw;s+=`<rect x="${x+1}" y="2" width="${cw}" height="${cw}" fill="${i<n?"#7b2cbf":"none"}" stroke="#889" stroke-width="1.5"/>`}return s+"</svg>"}
+const wr=(a,ws,r)=>{const s=new Set(ws.filter(x=>x!=a));let t=0;while(s.size<3&&t++<60){const m=[...a.matchAll(/\d+/g)];if(!m.length)break;const q=m[ri(r,0,m.length-1)],v=+q[0]+ri(r,1,3)*(r()<.5?-1:1);if(v<=0)continue;const x=a.slice(0,q.index)+v+a.slice(q.index+q[0].length);if(x!=a)s.add(x)}return[...s].slice(0,3)};
+const cmp=(a,b,c,d)=>a*d<c*b?"<":a*d>c*b?">":"=";
+const SYM=["<",">","="];
+/* plantillas */
+const NW=["","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez"],DW=["","","medios","tercios","cuartos","quintos","sextos","séptimos","octavos","novenos","décimos"];
+const t00=r=>{const d=ri(r,3,9),n=ri(r,1,d-1);return{q:"¿Qué fracción representa la parte pintada de la figura?",svg:V(n,d),alt:`[Figura: ${d} partes iguales, ${n} pintadas]`,a:n+"/"+d,w:[(d-n)+"/"+d,d+"/"+n,n+"/"+(d+1)],f:"f"}};
+const t01=r=>{const d=ri(r,3,12),n=ri(r,1,d-1);return{q:`En la fracción ${n}/${d}, ¿cuál es el denominador?`,a:""+d,w:[""+n,""+(n+d),""+(d+1)],f:"n"}};
+const t02=r=>{const d=ri(r,3,9),n=ri(r,1,d-1);return{q:`En ${n}/${d}, ¿qué indica el numerador ${n}?`,a:"Las partes que se toman del entero",o:["Las partes que se toman del entero","Las partes iguales en que se divide el entero","El nombre de la figura","El total de enteros"]}};
+const t03=r=>{const n=ri(r,2,9),d=ri(r,3,10),a=NW[n]+" "+DW[d];return{q:`¿Cómo se lee la fracción ${n}/${d}?`,a,w:[NW[d]+" "+DW[n],NW[n]+" "+DW[d<10?d+1:d-1],NW[n]+" "+DW[d>3?d-1:d+1],NW[n<9?n+1:n-1]+" "+DW[d]]}};
+const t04=r=>{const t=pk(r,[8,10,12,15,16,20]),k=ri(r,2,t-2);return{q:`En una caja hay ${t} lápices y ${k} son rojos. ¿Qué fracción de los lápices es roja? (sin simplificar)`,a:k+"/"+t,w:[(t-k)+"/"+t,t+"/"+k,k+"/"+(t+k)],f:"f"}};
+const t10=r=>{const k=ri(r,0,2),d=ri(r,2,9),n=k==0?ri(r,1,d-1):k==1?d+ri(r,1,8):d;return{q:`La fracción ${n}/${d} es:`,a:["propia","impropia","igual a la unidad"][k],o:["propia","impropia","igual a la unidad","ninguna de las anteriores"],fx:1}};
+const t11=r=>{const ds=sh(r,[3,4,5,6,7,8,9]).slice(0,4);return{q:"¿Cuál de estas fracciones es impropia?",a:(ds[0]+ri(r,1,5))+"/"+ds[0],w:ds.slice(1).map(d=>ri(r,1,d-1)+"/"+d)}};
+const t12=r=>{const d=ri(r,3,12);return{q:`¿Cuál es el menor numerador para que la fracción con denominador ${d} sea impropia (numerador mayor que el denominador)?`,a:""+(d+1),w:[""+d,""+(d-1),""+(d+2)],f:"n"}};
+const t13=r=>{const d=ri(r,3,12);return{q:`¿Cuál es el mayor numerador para que la fracción con denominador ${d} sea propia?`,a:""+(d-1),w:[""+d,""+(d-2),""+(d+1)],f:"n"}};
+const t14=r=>{const d=ri(r,2,8),w=ri(r,1,5),q=ri(r,1,d-1);return{q:`¿Cuántos enteros completos hay en ${w*d+q}/${d}?`,a:""+w,w:[""+(w+1),""+q,""+(w*d)],f:"n"}};
+const t20=r=>{const w=ri(r,1,5),d=ri(r,2,9),q=ri(r,1,d-1);return{q:`Convierte el número mixto ${w} ${q}/${d} en fracción impropia.`,a:(w*d+q)+"/"+d,w:[(w+q)+"/"+d,(w*d)+"/"+d,(w*d-q)+"/"+d,(w*q+d)+"/"+d],f:"f"}};
+const t21=r=>{const w=ri(r,1,5),d=ri(r,2,9),q=ri(r,1,d-1);return{q:`Convierte ${w*d+q}/${d} en número mixto.`,a:w+" "+q+"/"+d,w:[q+" "+w+"/"+d,w+" "+d+"/"+q,(w+1)+" "+q+"/"+d],f:"m"}};
+const t22=r=>{const w=ri(r,1,5),d=ri(r,2,9),q=ri(r,1,d-1);return{q:`¿Cuál es la parte fraccionaria del número mixto ${w} ${q}/${d}?`,a:q+"/"+d,w:[d+"/"+q,w+"/"+d,(w+q)+"/"+d],f:"f"}};
+const t23=r=>{const w=ri(r,1,5),d=ri(r,2,9),q=ri(r,1,d-1),p=pk(r,["Pedro","Sofía","Camilo","Valentina"]);return{q:`${p} bebió ${w} jarras y ${q}/${d} de otra jarra de jugo. ¿Cuántas jarras bebió en total? (número mixto)`,a:w+" "+q+"/"+d,w:[q+" "+w+"/"+d,w+" "+d+"/"+q,(w+q)+"/"+d],f:"m"}};
+const t30=r=>{const d=ri(r,2,9),n=ri(r,1,d-1),k=ri(r,2,6);return{q:`Completa la fracción equivalente: ${n}/${d} = ?/${d*k}`,a:""+(n*k),w:[""+(n+k),""+(n*k+1),""+(n*k-1)],f:"n"}};
+const t31=r=>{let n,d;do{d=ri(r,2,9);n=ri(r,1,d-1)}while(gcd(n,d)>1);const k=ri(r,2,6);return{q:`Simplifica ${n*k}/${d*k} hasta su mínima expresión.`,a:n+"/"+d,w:[d+"/"+n,n+"/"+(d*k),(n+1)+"/"+d,(n*k)+"/"+d],f:"f"}};
+const t32=r=>{const d=ri(r,2,9),n=ri(r,1,d-1),k=ri(r,2,5);return{q:`¿Cuál fracción es equivalente a ${n}/${d}?`,a:(n*k)+"/"+(d*k),w:[(n*k)+"/"+(d*k+1),(n+k)+"/"+(d+k),(n*k+1)+"/"+(d*k)]}};
+const t33=r=>{const d=ri(r,2,9),n=ri(r,1,d-1),k=ri(r,2,5),y=r()<.5;return{q:`¿Las fracciones ${n}/${d} y ${y?n*k:n*k+1}/${d*k} son equivalentes?`,a:y?"Sí":"No",o:["Sí","No"],fx:1}};
+const t34=r=>{const d=ri(r,2,9),n=ri(r,1,d-1),k=ri(r,2,6);return{q:`Escribe la fracción equivalente a ${n}/${d} que tenga denominador ${d*k}.`,a:(n*k)+"/"+(d*k),w:[(n+k)+"/"+(d*k),n+"/"+(d*k),(n*k)+"/"+d],f:"f"}};
+const t40=r=>{const d=ri(r,4,12),n=ri(r,1,d-1);let m;do{m=ri(r,1,d-1)}while(m==n);return{q:`Compara con <, > o =:  ${n}/${d}  ?  ${m}/${d}`,a:cmp(n,d,m,d),o:SYM,fx:1,f:"s"}};
+const t41=r=>{const n=ri(r,1,5),d=ri(r,n+1,12);let e;do{e=ri(r,n+1,12)}while(e==d);return{q:`Compara con <, > o =:  ${n}/${d}  ?  ${n}/${e}`,a:cmp(n,d,n,e),o:SYM,fx:1,f:"s"}};
+const t42=r=>{let a,b,c,d;do{b=ri(r,2,9);d=ri(r,2,9);a=ri(r,1,b-1);c=ri(r,1,d-1)}while(b==d||a*d==c*b);return{q:`Compara con <, > o =:  ${a}/${b}  ?  ${c}/${d}`,a:cmp(a,b,c,d),o:SYM,fx:1,f:"s"}};
+const t43=r=>{const d=ri(r,5,12),ns=sh(r,[...Array(d-1).keys()].map(i=>i+1)).slice(0,3),F=ns.map(x=>x+"/"+d),m=Math.max(...ns)+"/"+d;return{q:`¿Cuál es la fracción mayor: ${F[0]}, ${F[1]} o ${F[2]}?`,a:m,w:F.filter(x=>x!=m),f:"f"}};
+const t44=r=>{let F;if(r()<.5)F=sh(r,[2,3,4,5,6,7,8,9]).slice(0,3).map(x=>[1,x]);else{const d=ri(r,5,12);F=sh(r,[...Array(d-1).keys()].map(i=>i+1)).slice(0,3).map(x=>[x,d])}
+const jn=A=>A.map(p=>p[0]+"/"+p[1]).join(" < "),asc=F.slice().sort((p,q)=>p[0]/p[1]-q[0]/q[1]),a=jn(asc),P=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]].map(p=>jn(p.map(i=>F[i]))).filter(x=>x!=a);
+return{q:`Ordena de menor a mayor: ${F.map(p=>p[0]+"/"+p[1]).join(", ")}`,a,o:[a,...sh(r,P).slice(0,3)]}};
+const t50=r=>{const d=ri(r,5,12),n=ri(r,1,d-3),m=ri(r,1,d-1-n),a=fs(n+m,d);return{q:`Resuelve y simplifica: ${n}/${d} + ${m}/${d} =`,a,w:[(n+m)+"/"+(2*d),(n*m)+"/"+d,(n+m+1)+"/"+d,(n+m)+"/"+d],f:"f"}};
+const t51=r=>{const d=ri(r,5,12),n=ri(r,3,d-1),m=ri(r,1,n-1),a=fs(n-m,d);return{q:`Resuelve y simplifica: ${n}/${d} - ${m}/${d} =`,a,w:[(n-m)+"/"+(2*d),(n+m)+"/"+d,(n-m+1)+"/"+d,(n-m)+"/"+d],f:"f"}};
+function sum(r){let a=1,b=2,c=1,d=3;for(let i=0;i<40;i++){b=pk(r,[2,3,4,5,6]);d=pk(r,[2,3,4,5,6,8,10]);if(b==d)continue;a=ri(r,1,b-1);c=ri(r,1,d-1);if(a*d+c*b<b*d)break}return[a,b,c,d]}
+const t52=r=>{const[n1,d1,n2,d2]=sum(r),n=n1*d2+n2*d1,d=d1*d2,a=fs(n,d);return{q:`Resuelve y simplifica: ${n1}/${d1} + ${n2}/${d2} =`,a,w:[(n1+n2)+"/"+(d1+d2),(n1+n2)+"/"+d,(n+1)+"/"+d,n+"/"+d],f:"f"}};
+const t53=r=>{let[n1,d1,n2,d2]=sum(r);if(n1*d2<n2*d1)[n1,d1,n2,d2]=[n2,d2,n1,d1];const n=n1*d2-n2*d1,d=d1*d2,a=fs(n,d);return{q:`Resuelve y simplifica: ${n1}/${d1} - ${n2}/${d2} =`,a,w:[(n1-n2)+"/"+Math.abs(d1-d2||1),(n1+n2)+"/"+d,(n+1)+"/"+d,n+"/"+d],f:"f"}};
+const t54=r=>{const d=ri(r,5,12),n=ri(r,3,d-1),m=ri(r,1,n-1),p=pk(r,["Laura","Juan","Ana","Mateo"]);if(r()<.5){const x=ri(r,1,d-3),y=ri(r,1,d-1-x);return{q:`${p} comió ${x}/${d} de una pizza y su hermano comió ${y}/${d}. ¿Qué fracción de la pizza comieron entre los dos? (simplifica)`,a:fs(x+y,d),w:[(x+y)+"/"+(2*d),(x*y)+"/"+d,(x+y+1)+"/"+d],f:"f"}}
+return{q:`${p} tiene una cinta de ${n}/${d} de metro y corta ${m}/${d} de metro. ¿Cuánta cinta le queda? (simplifica)`,a:fs(n-m,d),w:[(n+m)+"/"+d,(n-m)+"/"+(2*d),(n-m+1)+"/"+d],f:"f"}};
+const t60=r=>{const d1=ri(r,2,8),n1=ri(r,1,d1-1),d2=ri(r,2,8),n2=ri(r,1,d2-1);return{q:`Resuelve y simplifica: ${n1}/${d1} × ${n2}/${d2} =`,a:fs(n1*n2,d1*d2),w:[(n1+n2)+"/"+(d1*d2),(n1*n2)+"/"+(d1+d2),(n1*d2)+"/"+(d1*n2)],f:"f"}};
+const t61=r=>{const d1=ri(r,2,8),n1=ri(r,1,d1-1),d2=ri(r,2,8),n2=ri(r,1,d2-1);return{q:`Resuelve y simplifica (puede ser impropia): ${n1}/${d1} ÷ ${n2}/${d2} =`,a:fs(n1*d2,d1*n2),w:[(n1*n2)+"/"+(d1*d2),(d1*n2)+"/"+(n1*d2),(n1*d2+1)+"/"+(d1*n2)],f:"f"}};
+const t62=r=>{const d=ri(r,3,8),n=ri(r,1,d-1),m=d*ri(r,2,6);return{q:`Calcula ${n}/${d} de ${m}.`,a:""+(m/d*n),w:[""+(m/d),""+(m*n),""+(m+n)],f:"n"}};
+const t63=r=>{const d=ri(r,2,8),n=ri(r,1,d-1),k=ri(r,2,4);return{q:`Una receta usa ${n}/${d} de taza de azúcar. Si se prepara ${k} veces, ¿cuánta azúcar se necesita en total? (simplifica)`,a:fs(n*k,d),w:[(n*k)+"/"+(d*k),(n+k)+"/"+d,n+"/"+(d*k)],f:"f"}};
+const t64=r=>{const d=ri(r,2,6),n=ri(r,1,d-1),k=ri(r,2,5);return{q:`Se reparten ${n}/${d} de pizza entre ${k} niños en partes iguales. ¿Qué fracción de la pizza recibe cada niño? (simplifica)`,a:fs(n,d*k),w:[(n*k)+"/"+d,n+"/"+(d+k),k+"/"+(d*n)],f:"f"}};
+/* [plantilla, ¿sirve para el taller escrito?] */
+const T=[[[t00,1],[t01,1],[t02,0],[t03,0],[t04,1]],[[t10,0],[t11,0],[t12,1],[t13,1],[t14,1]],[[t20,1],[t21,1],[t22,1],[t23,1]],[[t30,1],[t31,1],[t32,0],[t33,0],[t34,1]],[[t40,1],[t41,1],[t42,1],[t43,1],[t44,0]],[[t50,1],[t51,1],[t52,1],[t53,1],[t54,1]],[[t60,1],[t61,1],[t62,1],[t63,1],[t64,1]]];
+function item(tp,idx,seed,typed){const L=T[tp].filter(x=>!typed||x[1]),r=R(seed);r();r();const o=L[idx%L.length][0](r),it={tp,q:o.q,svg:o.svg||"",alt:o.alt||"",a:o.a,f:o.f||""};
+if(!typed){it.op=o.o?(o.fx?o.o:sh(r,o.o)):sh(r,[o.a,...wr(o.a,o.w||[],r)]);it.c=it.op.indexOf(o.a)}return it}
+const SEEN=new Set(),mk=(seed,typed,off)=>Array.from({length:50},(_,i)=>{let it,k=0;do{it=item(i%7,Math.floor(i/7)+off,seed+i*7919+k*104729,typed)}while(SEEN.has(it.q+it.svg+it.a)&&++k<40);SEEN.add(it.q+it.svg+it.a);return it});
+const EX=mk(1000,0,0),TA=mk(3000,1,1),EV=mk(7000,0,2);
+/* estado y guardado */
+const dflt={name:"",ex:{},ta:{},ev:{},evDone:0,taDone:0,enviado:0};
+const clone=()=>JSON.parse(JSON.stringify(dflt));let S=clone();
+const P="fr5p:",lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},lsDel=k=>{try{localStorage.removeItem(k)}catch(e){}};
+let cur=lsGet("fr5last")||"";
+{const raw=lsGet(P+cur);if(raw){try{S=Object.assign(S,JSON.parse(raw))}catch(e){}}}
+function save(){const k=S.name.trim()||"sin nombre";if(cur&&cur!==k)lsDel(P+cur);cur=k;lsSet(P+k,JSON.stringify(S));lsSet("fr5last",k);profs()}
+function profs(){const n=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith(P))n.push(k.slice(P.length))}}catch(e){}
+const s=$("pf");s.innerHTML="";s.add(new Option("👤 Elegir estudiante…",""));n.sort().forEach(x=>s.add(new Option(x,x,0,x==cur)))}
+function refresh(){$("nm").value=S.name;quiz("ex");taller();quiz("ev");res();profs();go(0)}
+function pickProf(v){if(!v)return;if(S.name.trim())save();const r=lsGet(P+v);if(!r)return;try{S=Object.assign(clone(),JSON.parse(r))}catch(e){return}cur=v;lsSet("fr5last",v);refresh()}
+function nuevo(){if(S.name.trim())save();S=clone();cur="";lsDel("fr5last");refresh();$("nm").focus()}
+function fileSave(){if(!S.name.trim())return alert("Escribe tu nombre primero ✏️");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:"application/json"}));a.download="avance_fracciones_"+S.name.trim().replace(/\s+/g,"_")+".json";document.body.appendChild(a);a.click();a.remove();alert("¡Archivo guardado! ✅ Búscalo en tu carpeta de Descargas. Para seguir, usa 📂 Cargar archivo.")}
+function fileLoad(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result),ob=x=>x&&typeof x=="object"?x:{};if(!d||typeof d.ev!="object"||d.ev===null||typeof d.ex!="object")throw 0;
+if(S.name.trim())save();
+S=Object.assign(clone(),{name:String(d.name||""),ex:ob(d.ex),ta:ob(d.ta),ev:ob(d.ev),evDone:d.evDone?1:0,taDone:d.taDone?1:0,enviado:d.enviado?1:0});cur="";save();refresh();alert("¡Avance cargado! ✅")}catch(e){alert("Este archivo no es un avance válido")}};r.readAsText(f);inp.value=""}
+/* ejercicios y evaluación */
+function quiz(k){const L=k=="ex"?EX:EV,A=S[k];let h="";
+if(k=="ex"){const n=Object.keys(A).length,c=L.filter((x,i)=>A[i]==x.c).length;h=`<div class="tip">Respondidas: ${n}/50 · Correctas: ${c}</div>`}
+$(k+"l").innerHTML=h+L.map((x,i)=>{const a=A[i],s=k=="ex"?a!=null:S.evDone;return `<div class="card"><span class="tag">${TOP[x.tp]}</span><br><b>${i+1}. ${H(E(x.q))}</b>${x.svg?`<div class="sv">${x.svg}</div>`:""}`+x.op.map((o,j)=>`<button class="opt ${s?(j==x.c?"ok":j==a?"bad":""):(j==a?"sel":"")}" onclick="pick('${k}',${i},${j})">${H(E(o))}</button>`).join("")+"</div>"}).join("")}
+function pick(k,i,j){if(k=="ex"&&S.ex[i]!=null)return;if(k=="ev"&&S.evDone)return;S[k][i]=j;save();quiz(k)}
+/* taller */
+function taller(){const d=S.taDone,c=TA.filter((x,i)=>norm(S.ta[i])==x.a).length;
+$("tal").innerHTML=(d?`<div class="tip">Acertaste ${c} de 50 en el taller.</div>`:"")+TA.map((x,i)=>{const v=S.ta[i]||"",ok=d&&norm(v)==x.a;return `<div class="card"><span class="tag">${TOP[x.tp]}</span><br><b>${i+1}. ${H(E(x.q))}</b>${x.svg?`<div class="sv">${x.svg}</div>`:""}<input class="ti ${d?(ok?"okI":"badI"):""}" id="t${i}" value="${E(v)}" ${d?"disabled":""} placeholder="${FM[x.f]}" oninput="S.ta[${i}]=this.value;save()"> ${d?(ok?"✅":`❌ <span class="tip">Respuesta correcta: ${H(E(x.a))}</span>`):""}</div>`}).join("")}
+function revisar(){if(S.taDone)return;const n=Object.keys(S.ta).filter(k=>norm(S.ta[k])).length;if(n<50&&!confirm("Te faltan casillas por responder. ¿Revisar igual?"))return;S.taDone=1;save();taller();res();scrollTo(0,0)}
+/* nota */
+function calc(){const ok=(L,k)=>L.map((x,i)=>k=="ta"?!!S.taDone&&norm(S.ta[i])==x.a:S[k][i]==x.c),e=ok(EX,"ex"),t=ok(TA,"ta"),v=ok(EV,"ev"),s=a=>a.filter(Boolean).length;
+const fin=((s(e)*.2+s(t)*.3+s(v)*.5)/50*5).toFixed(1);
+const dif=TOP.map((n,z)=>{let f=0,tot=0;[[e,EX],[t,TA],[v,EV]].forEach(([A,L],q)=>{if(q==1&&!S.taDone)return;L.forEach((x,i)=>{if(x.tp==z){tot++;if(!A[i])f++}})});return{t:n,z,f,n:tot}}).filter(d=>d.n&&d.f/d.n>=.4);
+return{ce:s(e),ct:s(t),cv:s(v),fin,dif}}
+function calif(){if(S.evDone)return;if(!S.name.trim())return alert("Escribe tu nombre arriba ✏️");
+if(Object.keys(S.ev).length<50&&!confirm("Te faltan preguntas por responder. ¿Calificar igual?"))return;
+S.evDone=1;save();quiz("ev");res();$("rs").scrollIntoView()}
+function res(){const el=$("rs");if(!S.evDone){el.innerHTML="";return}
+const{ce,ct,cv,fin,dif}=calc();
+el.innerHTML=`<div class="card"><h2>🏆 Mi nota</h2><h3>${E(S.name)}</h3><p class="big">${fin>=4?"🌟":fin>=3?"😊":"💪"} ${fin} / 5.0</p>
+<p style="text-align:center">Ejercicios: ${ce}/50 (20%) · Taller: ${S.taDone?ct+"/50":"sin revisar"} (30%) · Evaluación: ${cv}/50 (50%)</p>
+${S.taDone?"":'<div class="tip">⚠️ No has revisado el taller; cuenta como 0. Ve a 🛠️ Taller y pulsa «Revisar».</div>'}
+<h3>🔎 Dificultades observadas</h3>`+(dif.length?dif.map(d=>`<div class="tip"><b>${d.t}</b> (${d.f} de ${d.n} actividades fallidas o sin responder)<br>💡 ${TIP[d.z]}</div>`).join(""):'<div class="tip">🎉 ¡No se observan dificultades importantes! Sigue así.</div>')+
+(S.enviado?'<div class="tip">✅ Tu informe ya fue enviado al profesor.</div>':"")+
+`<button id="bsend" class="b no" style="background:#ff006e" onclick="enviar()">📧 Enviar informe al profesor</button><button class="b no" onclick="window.print()">🖨️ Imprimir</button></div>`}
+/* informe PDF y envío */
+function mkPdf(){const J=window.jspdf&&window.jspdf.jsPDF;if(!J)return null;
+const d=new J({unit:"mm",format:"letter"}),{ce,ct,cv,fin,dif}=calc(),W=d.internal.pageSize.getWidth()-30;let y=20;
+const line=(t,sz,b)=>{sz=sz||11;d.setFontSize(sz);d.setFont("helvetica",b?"bold":"normal");d.splitTextToSize(String(t),W).forEach(l=>{if(y>268){d.addPage();y=20}d.text(l,15,y);y+=sz*0.4+1.3})};
+line("Informe: Números fraccionarios (grado 5°)",15,1);y+=2;
+line("Estudiante: "+S.name,12);line("Fecha: "+new Date().toLocaleDateString("es-CO"),12);
+line("Nota final: "+fin+" / 5.0",14,1);
+line("Ejercicios: "+ce+"/50 (20%)   ·   Taller: "+(S.taDone?ct+"/50":"sin revisar")+" (30%)   ·   Evaluación: "+cv+"/50 (50%)",11);y+=3;
+line("Dificultades observadas",13,1);
+if(dif.length)dif.forEach(x=>line("- "+x.t+" ("+x.f+" de "+x.n+" fallidas): "+TIP[x.z]));else line("No se observan dificultades importantes.");
+y+=3;line("Detalle de la evaluación",13,1);
+EV.forEach((x,i)=>{const a=S.ev[i];line((i+1)+". "+x.q+(x.alt?" "+x.alt:""),10,1);
+line("   Respondió: "+(a==null?"(sin responder)":x.op[a])+"  ->  "+(a==x.c?"CORRECTA":"INCORRECTA. Respuesta correcta: "+x.op[x.c]),10)});
+return d}
+const mail=(a,b)=>{location.href="mailto:"+CORREO_PROFE+"?subject="+encodeURIComponent(a)+"&body="+encodeURIComponent(b)};
+async function enviar(){if(!S.evDone)return alert("Primero califica la evaluación");
+if(URL_ENVIO)return auto();
+return manual()}
+async function auto(){const b=$("bsend"),{cv,fin,dif}=calc(),nm=S.name.trim(),d=mkPdf();
+if(!d){alert("No se pudo crear el PDF (revisa tu conexión a internet).");return}
+const fn="informe_fracciones_"+nm.replace(/\s+/g,"_")+".pdf";b.disabled=true;b.textContent="⏳ Enviando…";
+try{const b64=await new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]);r.onerror=no;r.readAsDataURL(d.output("blob"))});
+await fetch(URL_ENVIO,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({asunto:"Números fraccionarios 5° - "+nm+" - Nota "+fin,nombre:nm,nota:fin,correctas:cv,dificultades:dif.length?dif.map(x=>x.t).join(", "):"ninguna importante",archivo:fn,pdf:b64})});
+S.enviado=1;save();res();alert("¡Informe enviado a tu profesor! ✅")}
+catch(e){b.disabled=false;b.textContent="📧 Enviar informe al profesor";alert("No se pudo enviar automáticamente (revisa tu internet). Se usará el envío manual por correo.");manual()}}
+async function manual(){const{cv,fin,dif}=calc(),nm=S.name.trim(),asunto="Números fraccionarios 5° - "+nm+" - Nota "+fin;
+const cuerpo=`Hola profe, envío mi informe.\nEstudiante: ${nm}\nNota: ${fin} / 5.0 (evaluación: ${cv} de 50 correctas)\nDificultades: ${dif.length?dif.map(x=>x.t).join(", "):"ninguna importante"}\n\n(Adjunto mi informe en PDF)`;
+const d=mkPdf();
+if(!d){alert("No se pudo crear el PDF (revisa tu conexión a internet). Se abrirá la impresión: elige «Guardar como PDF» y luego adjúntalo al correo.");window.print();mail(asunto,cuerpo);return}
+const fn="informe_fracciones_"+nm.replace(/\s+/g,"_")+".pdf",blob=d.output("blob"),f=new File([blob],fn,{type:"application/pdf"});
+if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:asunto,text:cuerpo+(CORREO_PROFE?"\n\nEnviar a: "+CORREO_PROFE:"")});return}catch(e){if(e.name=="AbortError")return}}
+const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();a.remove();
+alert("Se descargó tu informe en PDF 📄. Ahora se abrirá tu correo: ¡adjunta el PDF y envíalo!");
+mail(asunto,cuerpo)}
+/* teoría */
+const TH=[
+["1. La fracción y sus términos",`Una <b>fracción</b> representa una o varias partes iguales de un entero. Se escribe con dos números separados por una raya:<br>• <b>Numerador</b> (arriba): las partes que se toman.<br>• <b>Denominador</b> (abajo): las partes iguales en que se divide el entero.<br><br>§3,4§ &nbsp; 3/4 se lee «tres cuartos»: el entero tiene 4 partes iguales y se pintaron 3.<div class="tip">Cómo se leen los denominadores: 2 medios · 3 tercios · 4 cuartos · 5 quintos · 6 sextos · 7 séptimos · 8 octavos · 9 novenos · 10 décimos.</div>`],
+["2. Fracciones propias e impropias",`• <b>Propia:</b> el numerador es <b>menor</b> que el denominador (3/5). Vale menos de 1 entero.<br>• <b>Impropia:</b> el numerador es <b>mayor</b> que el denominador (7/4). Vale más de 1 entero.<br>• Si el numerador y el denominador son iguales (4/4), vale exactamente 1 entero.<br><br>§3,5§ &nbsp; propia &nbsp;&nbsp; §7,4§ &nbsp; impropia`],
+["3. Números mixtos",`Un <b>número mixto</b> tiene una parte entera y una fracción propia: 1 3/4 (un entero y tres cuartos). §7,4§<div class="tip"><b>De mixto a impropia:</b> entero × denominador + numerador, sobre el mismo denominador.<br>2 1/3 → (2×3+1)/3 = 7/3</div><div class="tip"><b>De impropia a mixto:</b> divide el numerador entre el denominador. El cociente es el entero y el residuo es el nuevo numerador.<br>7/3 → 7÷3 = 2 y sobra 1 → 2 1/3</div>`],
+["4. Fracciones equivalentes",`Son fracciones que se escriben distinto pero valen lo mismo: 1/2 = 2/4 = 4/8. §1,2§ §2,4§ §4,8§<div class="tip"><b>Amplificar:</b> multiplica numerador y denominador por el mismo número. 1/2 = 3/6 (× 3 arriba y abajo).</div><div class="tip"><b>Simplificar:</b> divide numerador y denominador por el mismo número (su máximo divisor común). 6/8 = 3/4 (÷ 2). Cuando ya no se puede simplificar más, es la <b>mínima expresión</b>.</div>`],
+["5. Comparación de fracciones",`• <b>Igual denominador:</b> es mayor la que tiene el mayor numerador. 5/8 &gt; 3/8.<br>• <b>Igual numerador:</b> es mayor la que tiene el menor denominador. 1/2 &gt; 1/5 (medios son partes más grandes que quintos).<br>• <b>Distintos numerador y denominador:</b> usa productos cruzados. Para 2/3 y 3/4: 2×4 = 8 y 3×3 = 9; como 8 &lt; 9, entonces 2/3 &lt; 3/4.<div class="tip">Para ordenar de menor a mayor, compara de dos en dos o pasa todas a un denominador común.</div>`],
+["6. Adición y sustracción de fracciones",`• <b>Igual denominador:</b> se suman o se restan los numeradores y el denominador se deja igual. 2/7 + 3/7 = 5/7 &nbsp;·&nbsp; 6/9 - 2/9 = 4/9.<br>• <b>Distinto denominador:</b> primero busca fracciones equivalentes con el mismo denominador y luego opera. 1/2 + 1/3 = 3/6 + 2/6 = 5/6.<div class="tip">Al final, simplifica el resultado: 2/8 + 2/8 = 4/8 = 1/2.</div>`],
+["7. Multiplicación y división de fracciones",`• <b>Multiplicar:</b> numerador × numerador y denominador × denominador. 2/3 × 3/4 = 6/12 = 1/2.<br>• <b>Fracción de un número:</b> divide el número entre el denominador y multiplica por el numerador. 3/4 de 12 → 12÷4 = 3 → 3×3 = 9.<br>• <b>Dividir:</b> multiplica la primera fracción por la <b>invertida</b> de la segunda. 2/3 ÷ 4/5 = 2/3 × 5/4 = 10/12 = 5/6.<br>• <b>Fracción ÷ número entero:</b> multiplica el denominador por ese número. 1/2 ÷ 3 = 1/6.`]];
+$("th").innerHTML=TH.map(t=>`<div class="card"><h3>${t[0]}</h3>${H(t[1]).replace(/§(\d+),(\d+)§/g,(m,a,b)=>V(+a,+b))}</div>`).join("");
+/* navegación */
+const NAV=["📘 Teoría","🎮 Ejercicios","🛠️ Taller","📝 Evaluación"];
+$("nav").innerHTML=NAV.map((t,i)=>`<button onclick="go(${i})">${t}</button>`).join("");
+function go(n){document.querySelectorAll("section").forEach((s,i)=>s.classList.toggle("on",i==n));document.querySelectorAll("nav button").forEach((b,i)=>b.classList.toggle("on",i==n));scrollTo(0,0)}
+refresh();
+</script>
+</body>
+</html>
